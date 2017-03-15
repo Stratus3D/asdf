@@ -29,6 +29,15 @@ teardown() {
   [ $(git rev-parse --abbrev-ref HEAD) = "master" ]
 }
 
+@test "update_command should checkout the latest tag" {
+  run update_command
+  [ "$status" -eq 0 ]
+  cd $ASDF_DIR
+  local tag=$(git describe --tag)
+  echo $(git tag) | grep $tag
+  [ "$status" -eq 0 ]
+}
+
 @test "update_command should not remove plugin versions" {
   run install_command dummy 1.1
   [ "$status" -eq 0 ]
