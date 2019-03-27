@@ -575,11 +575,11 @@ shim_plugin_versions() {
 }
 
 strip_tool_version_comments() {
-  local tool_version_path=$1
+  local tool_version_path="$1"
 
   while IFS= read -r tool_line || [ -n "$tool_line" ]; do
     # Remove whitespace before pound sign, the pound sign, and everything after it
-    new_line=$(echo "$tool_line" | sed -r -e 's/(\s*\#.*)//')
+    new_line="$(echo "$tool_line" | sed -r -e 's/(\s*\#.*)//')"
 
     # Only print the line if it is not empty
     if [[ ! -z "$new_line" ]]; then
