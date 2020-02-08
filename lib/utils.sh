@@ -60,6 +60,8 @@ get_install_path() {
 
   if [ "$install_type" = "version" ]; then
     echo "${install_dir}/${plugin}/${version}"
+  elif [ "$install_type" = "path" ]; then
+    echo $version
   else
     echo "${install_dir}/${plugin}/${install_type}-${version}"
   fi
@@ -466,6 +468,9 @@ list_plugin_exec_paths() {
   if [ "${version_info[0]}" = "ref" ]; then
     local install_type="${version_info[0]}"
     local version="${version_info[1]}"
+  elif [ "${version_info[0]}" = "path" ]; then
+    local install_type="${version_info[0]}"
+    local version="${version_info[1]}"
   else
     local install_type="version"
     local version="${version_info[0]}"
@@ -518,6 +523,13 @@ with_plugin_env() {
   # exec_paths contains a trailing newline which is converted to a colon, so no
   # colon is needed between the subshell and the PATH variable in this string
   path="$(echo "$exec_paths" | tr '\n' ':')$PATH"
+
+  if [[ "$version" =~ "path"* ]]; then
+    # TODO: Handle manual paths
+    # execute as is for system
+    PATH=$path "$callback"
+    return $?
+  fi
 
   # If no custom exec-env transform, just execute callback
   if [ ! -f "${plugin_path}/bin/exec-env" ]; then
@@ -662,10 +674,14 @@ select_version() {
         local plugin_shim_name
         local plugin_shim_version
         IFS=' ' read -r plugin_shim_name plugin_shim_version <<<"$plugin_and_version"
-        if [[ "$plugin_name" == "$plugin_shim_name" ]] &&
-          [[ "$plugin_version" == "$plugin_shim_version" ]]; then
-          echo "$plugin_name $plugin_version"
-          return
+        if [[ "$plugin_name" == "$plugin_shim_name" ]]; then
+          if [[ "$plugin_version" == "$plugin_shim_version" ]]; then
+            echo "$plugin_name $plugin_version"
+            return
+          elif [[ "$plugin_version" == "path:"* ]]; then
+            echo "$plugin_name $plugin_version"
+            return
+          fi
         fi
       done
     done
@@ -701,6 +717,11 @@ with_shim_executable() {
       local path=$PATH
       if [ "system" == "$full_version" ]; then
         path=$(echo "$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
+      fi
+
+      if [[ "$full_version" == "path:"* ]]; then
+        version_path=$(echo $full_version | cut -d: -f2)
+        path=$(echo "$version_path:$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
       fi
 
       executable_path=$(PATH=$path command -v "$shim_name")
