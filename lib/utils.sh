@@ -61,7 +61,7 @@ get_install_path() {
   if [ "$install_type" = "version" ]; then
     echo "${install_dir}/${plugin}/${version}"
   elif [ "$install_type" = "path" ]; then
-    echo $version
+    echo "$version"
   else
     echo "${install_dir}/${plugin}/${install_type}-${version}"
   fi
@@ -699,10 +699,10 @@ with_shim_executable() {
   fi
 
   local selected_version
-  selected_version="$(select_version $shim_name)"
+  selected_version="$(select_version "$shim_name")"
 
   if [ -z "$selected_version" ]; then
-    selected_version=$(select_from_preset_version "$shim_name")
+    selected_version="$(select_from_preset_version "$shim_name")"
   fi
 
   if [ -n "$selected_version" ]; then
@@ -720,7 +720,7 @@ with_shim_executable() {
       fi
 
       if [[ "$full_version" == "path:"* ]]; then
-        version_path=$(echo $full_version | cut -d: -f2)
+        version_path=$(echo "$full_version" | cut -d: -f2)
         path=$(echo "$version_path:$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
       fi
 
